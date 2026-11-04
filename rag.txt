@@ -1,0 +1,66 @@
+OOP FUNDAMENTALS — A SMALL PYTHON SNIPPET
+=========================================
+
+1. ENCAPSULATION  -> bundle data + behaviour, hide internals
+2. ABSTRACTION    -> expose a simple interface, hide the details
+3. INHERITANCE    -> reuse and extend an existing class
+4. POLYMORPHISM   -> same call, different behaviour per class
+
+
+from abc import ABC, abstractmethod
+
+
+# ABSTRACTION: the base class defines *what* every model must do,
+# never *how*. You cannot instantiate it directly.
+class Model(ABC):
+    def __init__(self, name: str):
+        self.name = name
+
+    @abstractmethod
+    def generate(self, prompt: str) -> str:
+        ...
+
+
+# INHERITANCE: ChatModel reuses Model's state and contract.
+class ChatModel(Model):
+    # ENCAPSULATION: __temperature is private to this class and is
+    # only reachable through the validated property below.
+    def __init__(self, name: str, temperature: float = 0.7):
+        super().__init__(name)
+        self.temperature = temperature
+
+    @property
+    def temperature(self) -> float:
+        return self.__temperature
+
+    @temperature.setter
+    def temperature(self, value: float) -> None:
+        if not 0.0 <= value <= 2.0:
+            raise ValueError("temperature must be between 0.0 and 2.0")
+        self.__temperature = value
+
+    def generate(self, prompt: str) -> str:
+        return f"[{self.name} @ {self.temperature}] {prompt}"
+
+
+class EmbeddingModel(Model):
+    def generate(self, prompt: str) -> str:
+        return f"[{self.name}] embedding vector for: {prompt}"
+
+
+# POLYMORPHISM: one loop, same method call, class-specific results.
+models: list[Model] = [ChatModel("gpt", 0.2), EmbeddingModel("bge")]
+
+for m in models:
+    print(m.generate("What is RAG?"))
+
+# Output:
+# [gpt @ 0.2] What is RAG?
+# [bge] embedding vector for: What is RAG?
+
+
+# Quick map of the four pillars to this snippet:
+# - Encapsulation: __temperature + property setter guarding valid values.
+# - Abstraction: Model exposes generate() and hides implementation.
+# - Inheritance: ChatModel and EmbeddingModel extend Model.
+# - Polymorphism: both respond to m.generate() differently.
